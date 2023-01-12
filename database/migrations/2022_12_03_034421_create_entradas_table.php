@@ -16,13 +16,14 @@ return new class extends Migration
         Schema::create('entradas', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('producto_id')->nullable();
-            $table->foreign('producto_id')->references('id')->on('productos')->onDelete('set null');
+            $table->foreign('producto_id')->references('id')->on('productos')->onDelete('cascade');
 
             $table->text('obs_entrada')->nullable();
-            $table->integer('cant_entrada');
+            $table->integer('cant_entrada')->nullable();
+            $table->integer('cant_entrada_val')->nullable();
             $table->timestamps();
             $table->date('fecha_entrada');
-            $table->integer('contador_entrada');
+            $table->integer('validador');
         });
     }
 

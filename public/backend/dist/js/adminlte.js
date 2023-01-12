@@ -283,7 +283,7 @@
       this._parent.css({
         height: this._parent.height(),
         width: this._parent.width(),
-        transition: 'all .15s'
+        transition: 'all .01'
       }).delay(150).queue(function () {
         var $element = $__default["default"](this);
         $element.addClass(CLASS_NAME_MAXIMIZED);
@@ -1957,7 +1957,7 @@
   var Default$5 = {
     autoCollapseSize: 992,
     enableRemember: false,
-    noTransitionAfterReload: true,
+    noTransitionAfterReload: false,
     animationSpeed: 300
   };
   /**

@@ -2,84 +2,156 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\EntradasImport;
 use App\Models\Entrada;
+use App\Models\Producto;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
 
 class EntradaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    public function __construct()
+    {
+        $this->middleware('can:entrada.index')->only('index');
+        $this->middleware('can:entrada.create')->only('create','importentrada','store');
+        $this->middleware('can:entrada.edit')->only('edit','update');
+        $this->middleware('can:entrada.show')->only('show');
+        $this->middleware('can:entrada.pdf')->only('pdf');
+        $this->middleware('can:entrada.destroy')->only('destroy');
+
+    }
     public function index()
     {
-        //
+        $datos['entradas']=Entrada::paginate(10);
+        $num=1;
+
+        return view('entrada.index',$datos, compact('num') );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    public function pdf()
+    {
+        $entradas=Entrada::paginate(10);
+        $pdf = Pdf::loadView('entrada.pdf', ['entradas'=>$entradas]);
+        return $pdf->stream();
+    }
+
     public function create()
     {
-        //
+        $produc=Producto::all();
+        
+        return view('entrada.create', compact('produc'));
+
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
+    public function importentrada()
+    {
+        return view('entrada.import-excel');
+    }
+
     public function store(Request $request)
     {
-        //
+        if($request->hasFile('import_file')){ 
+            $file= $request->file('import_file');
+            Excel::import(new EntradasImport, $file);
+            return redirect()->route('entrada.index')->with('success', 'entradas importadas exitosamente');
+        }
+        $campos=[
+            'producto_id' =>'required|integer',
+            'cant_entrada_val' =>'required|integer',
+            'obs_entrada' =>'nullable|string|max:100000',
+            'fecha_entrada' =>'required',
+            'validador' =>'nullable',
+        ];
+
+        $mensaje=[
+            'required'=>'El :attribute es requerido'
+        ];
+
+        $this->validate($request, $campos,$mensaje);
+
+        $datosEntrada = request()->except('_token'); //trae los datos excepto el token
+
+        $entras=request('cant_entrada_val');
+        $stockeado=request('producto_id');
+        $product=Producto::FindOrFail($stockeado);
+        $suma=0;
+        $suma= $product->stock+$entras;
+        $product->stock =$suma;
+        $product->save();
+        
+        Entrada::insert($datosEntrada);
+        
+        return redirect('entrada')->with('guardar', 'ok');
+
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Entrada  $entrada
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Entrada $entrada)
+    
+    public function show()
     {
-        //
+        $consulta= Entrada::query()
+            ->with('producto')
+            ->select(DB::raw('count(*) as mira , producto_id'))
+            // ->whereRaw('validador=0')
+            ->groupBy('producto_id')
+            ->paginate(10);
+        $num=1;
+
+        return view('entrada.show', compact('consulta', 'num'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Entrada  $entrada
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Entrada $entrada)
+    public function edit($id)
     {
-        //
+        $entrada=Entrada::findOrFail($id);
+        $produc=Producto::all();
+        
+        return view('entrada.edit', compact('entrada', 'produc'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Entrada  $entrada
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Entrada $entrada)
+    public function update(Request $request, $id)
     {
-        //
+        $campos=[
+            'producto_id' =>'required|integer',
+            'cant_entrada' =>'required|integer',
+            'obs_entrada' =>'nullable|string|max:100000',
+            'fecha_entrada' =>'nullable|string|max:100000',
+            'validador' =>'nullable|string|max:100000',
+        ];
+
+        $mensaje=[
+            'required'=>'El :attribute es requerido'
+        ];
+
+        $this->validate($request, $campos,$mensaje);
+        $datosEntrada = request()->except('_token','_method');//quitamos el token y metodo
+        $nuevo=request('cant_entrada_val');
+        $entras=request('cant_entrada');
+        $temp=0;
+        if($entras>$nuevo){ //ára traerme la foto
+            $temp=$entras-$nuevo;
+            $datosEntrada['cant_entrada_val']=$request->cant_entrada_val + $temp;
+        }else if($entras<$nuevo){ //ára traerme la foto
+            $temp=$entras-$nuevo;
+            $datosEntrada['cant_entrada_val']=$request->cant_entrada_val + $temp;
+        }
+
+        $stockeado=request('producto_id');
+        $product=Producto::FindOrFail($stockeado);
+        $suma=0;
+        $suma= $product->stock+$temp;
+        $product->stock =$suma;
+        $product->save();
+
+        Entrada::where('id','=',$id)->update($datosEntrada);
+
+        return redirect('entrada')->with('editar', 'ok');
+        
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Entrada  $entrada
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Entrada $entrada)
+    public function destroy($id)
     {
-        //
+        Entrada::destroy($id);
+        return redirect('entrada')->with('eliminar', 'ok');
     }
 }

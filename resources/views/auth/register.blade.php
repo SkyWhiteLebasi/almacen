@@ -14,11 +14,69 @@
   <!-- Theme style -->
   <link rel="stylesheet" href="{{asset('backend/dist/css/adminlte.min.css')}}">
 </head>
-<body class="hold-transition register-page">
+<body class="hold-transition register-page logini">
+  <style>
+    .logini{
+      height: 100%;
+    
+    }
+    .logini {
+        padding: 80px 0px;
+        background: url(backend/dist/img/universidad.jpg);
+        background-position: center;
+        background-size: 100%;
+        background-repeat: no-repeat;
+        position: relative;
+        text-align: center;
+         
+        width:100%;
+        z-index: 1;
+    }
+    .login-box{
+      opacity: 0.95;      
+    }
+    img.opacity {
+        opacity: 1;
+        filter: alpha(opacity=50);
+        zoom: 1;
+    }
+
+    img.opacity:hover {
+        opacity: 0.5;
+        filter: alpha(opacity=100);
+        zoom: 1;
+    }
+    
+    ._main_head_as{
+  margin:20px 0 25px 0px;
+  display:inline-block;
+  z-index:2;
+  position:relative; 
+}
+
+._main_head_as a img{
+  height:100px;
+  width:100px;
+  position:relative;
+ /* border-radius:50px;*/
+}
+.form-sub-main{
+    color:#545454;
+    font-size:20px;
+    margin-top: 5%;
+}
+.yara{
+    background-color: rgb(0, 0, 0);   
+}
+
+  </style>
+
 <div class="register-box">
-  <div class="card card-outline card-primary">
-    <div class="card-header text-center">
-      <a href="../../index2.html" class="h1"><b>Almacen </b>DBU</a>
+  <div class="card card-outline card-danger">
+    <div class="card-header text-center yara">
+      <a href="#">
+        <img src="backend/dist/img/logouna.png"  class="opacity">
+      </a>
     </div>
     <div class="card-body">
       <p class="login-box-msg">Registrar un nuevo usuario</p>
@@ -26,7 +84,7 @@
       <form method="POST" action="{{ route('register') }}">
         @csrf
         <div class="input-group mb-3">
-          <input type="text" name="name" class="form-control" placeholder="Full name">
+          <input type="text" name="name" class="form-control" placeholder="Escriba su nombre">
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-user"></span>
@@ -34,7 +92,7 @@
           </div>
         </div>
         <div class="input-group mb-3">
-          <input type="email" name="email" class="form-control" placeholder="Email">
+          <input type="email" name="email" class="form-control" placeholder="Escriba su mail">
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-envelope"></span>
@@ -42,7 +100,7 @@
           </div>
         </div>
         <div class="input-group mb-3">
-          <input type="password" name="password" class="form-control" placeholder="Password">
+          <input type="password" name="password" class="form-control" placeholder="Escriba su password">
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-lock"></span>
@@ -50,7 +108,7 @@
           </div>
         </div>
         <div class="input-group mb-3">
-          <input type="password" name="password_confirmation" class="form-control" placeholder="Retype password">
+          <input type="password" name="password_confirmation" class="form-control" placeholder="Vuelva a escribir su password">
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-lock"></span>
@@ -58,34 +116,16 @@
           </div>
         </div>
         <div class="row">
-          <div class="col-8">
-            <div class="icheck-primary">
-              <input type="checkbox" id="agreeTerms" name="terms" value="agree">
-              <label for="agreeTerms">
-               I agree to the <a href="#">terms</a>
-              </label>
-            </div>
-          </div>
+          
           <!-- /.col -->
-          <div class="col-4">
-            <button type="submit" class="btn btn-primary btn-block">Register</button>
+          <div class="col-12">
+            <button type="submit" class="btn btn-danger btn-block">{{ __('Registrar') }}</button>
           </div>
           <!-- /.col -->
         </div>
       </form>
 
-      <div class="social-auth-links text-center">
-        <a href="#" class="btn btn-block btn-primary">
-          <i class="fab fa-facebook mr-2"></i>
-          Sign up using Facebook
-        </a>
-        <a href="#" class="btn btn-block btn-danger">
-          <i class="fab fa-google-plus mr-2"></i>
-          Sign up using Google+
-        </a>
-      </div>
-
-      <a href="{{route('login')}}" class="text-center">I already have a membership</a>
+      <a href="{{route('login')}}" class="text-center">Ya tengo mi cuenta</a>
     </div>
     <!-- /.form-box -->
   </div><!-- /.card -->

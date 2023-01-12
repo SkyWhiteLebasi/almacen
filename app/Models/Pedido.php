@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Pedido extends Model
 {
     use HasFactory;
+    protected $guarded = []; 
+     
     public function producto(){
         return $this->belongsTo('App\Models\Producto');
     }
@@ -17,5 +19,9 @@ class Pedido extends Model
 
     public function user(){
         return $this->belongsTo('App\Models\User');
+    }
+
+    public function medida(){
+        return $this->belongsTo('App\Models\Medida');
     }
 }

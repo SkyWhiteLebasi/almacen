@@ -2,103 +2,124 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\ProductsImport;
 use App\Models\Producto;
 use App\Models\Categoria;
+use App\Models\Medida;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\App;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
+use RealRashid\SweetAlert\Facades\Alert;
 
 class ProductoController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    public function __construct()
+    {
+        $this->middleware('can:producto.index')->only('index');
+        $this->middleware('can:producto.create')->only('create','create2','store');
+        $this->middleware('can:producto.edit')->only('edit','update');
+        $this->middleware('can:producto.destroy')->only('destroy');
+
+    }
     public function index()
     {
-        //
-        $productos=Producto::all();
-       // $categ=Categoria::all();
-        
-        // $datos['productos']=Producto::paginate(5);
-        return view('producto.index',compact('productos') );
+  
+        $datos['productos']=Producto::query()
+        ->with('medida')
+        ->with('categoria')
+        ->when(request('search'), function($query){
+            return $query->where('nombre_pr', 'like', '%' .request('search') . '%')
+            ->orwhere('num_orden', 'like', '%' .request('search') . '%')
+            ->orWhereHas('medida', function($q){
+                $q->where('nombre_medida', 'like', '%' .request('search') . '%');
+            })
+            ->orWhereHas('categoria', function($q){
+                $q->where('nombre_categoria', 'like', '%' .request('search') . '%');
+            });
+        })
+        ->paginate(10);
+        $num=1;
+ 
+        return view('producto.index',$datos, compact('num') );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    public function pdf()
+    {
+  
+        $productos=Producto::all();
+        $num=1;
+        $pdf = Pdf::loadView('producto.pdf', ['productos'=>$productos], compact('num'));
+
+        return $pdf->stream();
+    }
+    
     public function create()
     {
-        //
         $categ=Categoria::all();
-        //dd($categ);//para ver q te esta retornando
-        return view('producto.create', compact('categ'));
+        $med=Medida::all();
+        return view('producto.create', compact('categ', 'med'));
+    }
+    public function create2()
+    {
+       
+        return view('producto.import-excel');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-        //
+        if($request->hasFile('import_file')){ //excel
+            $file= $request->file('import_file');
+            Excel::import(new ProductsImport, $file);
+            return redirect()->route('producto.index')->with('success', 'Productos importados exitosamente');
+        }
+
+        $inv = request('inicial');
         $campos=[
+            'num_orden' =>'required|string|max:100',
             'nombre_pr' =>'required|string|max:100',
-            'foto' =>'required|max:10000|mimes:jpeg,png,jpg',
+            'foto' =>'nullable|max:10000|mimes:jpeg,png,jpg,jfif',
             'stock' =>'required|int|max:100000',
+            'inicial' =>'nullable|int|max:100000',
             'desc_pr' =>'nullable|string',
-            // 'medida_id' =>'nullable|string',
+            'medida_id' =>'required|string',
             'categoria_id' =>'required|string',
         ];
 
         $mensaje=[
             'required'=>'El :attribute es requerido',
-            'foto.required'=>'La foto es requerida'
         ];
+        
 
         $this->validate($request, $campos,$mensaje);
 
-        //$datosEmpleado = request()->all();
         $datosProducto = request()->except('_token'); //trae los datos excepto el token
-
+        
         if($request->hasFile('foto')){ //ára traerme la foto
             $datosProducto['foto']=$request->file('foto')->store('uploads','public'); 
+            $datosProducto['inicial']=$request->stock;
         }
+        
         Producto::insert($datosProducto);
-        //return response()->json($datosEmpleado); //trae todos los datos
-        return redirect('producto')->with('mensaje', 'Producto agregado con éxito');
+        
+        return redirect('producto')->with('guardar', 'ok');
+        // Alert::success('Success Title', 'Success Message');
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Producto  $producto
-     * @return \Illuminate\Http\Response
-     */
     public function show(Producto $producto)
     {
-        //
         return view('producto.add', compact('producto'));
     }
 
     
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Producto  $producto
-     * @return \Illuminate\Http\Response
-     */
     public function edit($id)
     {
-        //
         $producto=Producto::findOrFail($id);
+        $categ=Categoria::all();
+        $med=Medida::all();
 
-        return view('producto.edit', compact('producto'));
+        return view('producto.edit', compact('producto', 'categ','med'));
     }
 
     public function add($id)
@@ -108,30 +129,23 @@ class ProductoController extends Controller
         return view('producto.add', compact('producto'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Producto  $producto
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-        //
         $campos=[
+            
+            'num_orden' =>'required|string|max:100',
             'nombre_pr' =>'required|string|max:100',
-            'medida_id' =>'nullable|string|max:100',
             'stock' =>'required|int|max:100000',
-            'descr_pr' =>'nullable|string',
-
+            'desc_pr' =>'nullable|string',
+            'medida_id' =>'required|string',
+            'categoria_id' =>'required|string',
         ];
 
         $mensaje=[
             'required'=>'El :attribute es requerido',
-      
         ];
         if($request->hasFile('foto')){
-             $campos=['foto' =>'required|max:10000|mimes:jpeg,png,jpg'];
+             $campos=['foto' =>'required|max:10000|mimes:jpeg,png,jpg,jfif'];
              $mensaje=['foto.required'=>'La foto requerida'];
         }
         $this->validate($request, $campos,$mensaje);
@@ -147,25 +161,17 @@ class ProductoController extends Controller
 
         Producto::where('id','=',$id)->update($datosProducto);
         $producto=Producto::findOrFail($id);
-        //return view('empleado.edit', compact('empleado'));
-        return redirect('producto')->with('mensaje', 'productin modificado');
+        return redirect('producto')->with('editar', 'ok');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Producto  $producto
-     * @return \Illuminate\Http\Response
-     */
+
     public function destroy($id)
     {
-        //
-        $producto=Producto::findOrFail($id);
-        if(Storage::delete('public/'.$producto->foto)){
+        // $producto=Producto::findOrFail($id);
+        // if(Storage::delete('public/'.$producto->foto)){
             Producto::destroy($id);
-        }
+        // }
 
-        //Empleado::destroy($id);
-        return redirect('producto')->with('mensaje', 'productin eliminado');
+        return redirect('producto')->with('eliminar', 'ok');
     }
 }

@@ -7,79 +7,62 @@ use Illuminate\Http\Request;
 
 class MedidaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    public function __construct()
+    {
+        $this->middleware('can:medida.create')->only('create','store');
+        $this->middleware('can:medida.destroy')->only('destroy');
+
+    }
     public function index()
     {
-        //
+        $datos['medidas']=Medida::paginate(10);
+        return view('medida.index',$datos );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
-        //
+        return view('medida.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-        //
+        $campos=[
+            'nombre_medida' =>'required|string|max:100',
+        ];
+
+        $mensaje=[
+            'required'=>'El :attribute es requerido'
+        ];
+
+        $this->validate($request, $campos,$mensaje);
+        $datosMedida = request()->except('_token'); //trae los datos excepto el token
+
+        
+        Medida::insert($datosMedida);
+        return redirect('medida')->with('guardar', 'ok');
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Medida  $medida
-     * @return \Illuminate\Http\Response
-     */
+    
     public function show(Medida $medida)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Medida  $medida
-     * @return \Illuminate\Http\Response
-     */
     public function edit(Medida $medida)
     {
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Medida  $medida
-     * @return \Illuminate\Http\Response
-     */
+    
     public function update(Request $request, Medida $medida)
     {
         //
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Medida  $medida
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Medida $medida)
+    
+    public function destroy($id)
     {
-        //
+        Medida::destroy($id);
+        return redirect('medida')->with('eliminar', 'ok');
     }
 }

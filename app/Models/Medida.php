@@ -12,4 +12,7 @@ class Medida extends Model
     public function productos(){
         return $this->hasMany('App\Models\Producto');
     }
+    public function pedidos(){
+        return $this->hasMany('App\Models\Pedido');
+    }
 }

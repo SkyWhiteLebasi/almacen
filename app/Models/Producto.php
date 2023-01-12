@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Producto extends Model
 {
     use HasFactory;
+    protected $guarded = [];  
     
     /*relacion uno a muchos (inversa)*/
     //varios productos pertenecen a una medida

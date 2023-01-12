@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Salida extends Model
 {
     use HasFactory;
+    protected $guarded = [];  
     //varias entradas tienen un producto
     public function producto(){
         return $this->belongsTo('App\Models\Producto');

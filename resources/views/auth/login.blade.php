@@ -130,7 +130,7 @@
       </form>
       
       <p class="mb-0">
-        <a href="{{route('register')}}" class="text-center">Register a new membership</a>
+        <a href="{{route('register')}}" class="text-center">Registrar un nuevo usuario</a>
       </p>
       
       <!-- /.social-auth-links -->

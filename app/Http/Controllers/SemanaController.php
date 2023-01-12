@@ -7,14 +7,18 @@ use Illuminate\Http\Request;
 
 class SemanaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    public function __construct()
+    {
+        $this->middleware('can:semana.index')->only('index');
+        $this->middleware('can:semana.create')->only('create','store');
+        $this->middleware('can:semana.destroy')->only('destroy');
+
+    }
     public function index()
     {
         //
+        $datos['semanas']=Semana::paginate(5);
+        return view('semana.index',$datos );
     }
 
     /**
@@ -25,6 +29,7 @@ class SemanaController extends Controller
     public function create()
     {
         //
+        return view('semana.create');
     }
 
     /**
@@ -36,6 +41,20 @@ class SemanaController extends Controller
     public function store(Request $request)
     {
         //
+        $campos=[
+            'nombre_semana' =>'required|string|max:100',
+        ];
+
+        $mensaje=[
+            'required'=>'El :attribute es requerido'
+        ];
+
+        $this->validate($request, $campos,$mensaje);
+        $datosSemana = request()->except('_token'); //trae los datos excepto el token
+
+        
+        Semana::insert($datosSemana);
+        return redirect('semana')->with('guardar', 'ok');
     }
 
     /**
@@ -78,8 +97,10 @@ class SemanaController extends Controller
      * @param  \App\Models\Semana  $semana
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Semana $semana)
+    public function destroy($id)
     {
         //
+        Semana::destroy($id);
+        return redirect('semana')->with('eliminar', 'ok');
     }
 }
